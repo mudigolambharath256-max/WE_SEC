@@ -1,0 +1,74 @@
+id: mcp-lethal-trifecta
+
+info:
+  name: MCP Lethal Trifecta Detection
+  author: llmrt
+  severity: critical
+  description: Detects Lethal Trifecta (write + exec + network) in MCP servers
+  reference:
+    - https://adversa.ai/mcp-top-25
+  classification:
+    cvss-metrics: CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H
+    cvss-score: 10.0
+    cwe-id: CWE-94
+  tags: mcp,lethal-trifecta,adversa-mcp-01
+
+http:
+  - method: POST
+    path:
+      - "{{BaseURL}}/mcp"
+      - "{{BaseURL}}/api/mcp"
+      - "{{BaseURL}}/rpc"
+    
+    headers:
+      Content-Type: application/json
+    
+    body: |
+      {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "tools/list",
+        "params": {}
+      }
+    
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "write"
+          - "create"
+          - "save"
+          - "file"
+        condition: or
+      
+      - type: word
+        part: body
+        words:
+          - "execute"
+          - "run"
+          - "exec"
+          - "shell"
+          - "command"
+        condition: or
+      
+      - type: word
+        part: body
+        words:
+          - "fetch"
+          - "http"
+          - "request"
+          - "url"
+          - "network"
+        condition: or
+      
+      - type: status
+        status:
+          - 200
+    
+    extractors:
+      - type: json
+        part: body
+        json:
+          - '.result.tools[].name'
+          - '.result.tools[].description'

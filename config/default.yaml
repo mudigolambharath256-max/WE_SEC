@@ -1,0 +1,146 @@
+# llmrt Default Configuration
+# Base configuration inherited by all profiles
+
+# Global settings
+global:
+  version: "1.0.0"
+  environment: "production"  # development, staging, production
+  
+  # Default rate limiting
+  rate_limit:
+    requests_per_second: 5
+    burst: 10
+    delay_ms: 200
+  
+  # Default concurrency
+  concurrency: 5
+  
+  # Default timeout
+  timeout_seconds: 30
+
+# Default authentication
+auth:
+  type: "none"
+  retry_on_401: true
+  retry_on_403: false
+
+# Default phases
+phases:
+  recon:
+    enabled: true
+    timeout: 300
+  
+  prompt_attacks:
+    enabled: true
+    timeout: 600
+  
+  rag_attacks:
+    enabled: false
+    timeout: 600
+  
+  mcp_attacks:
+    enabled: false
+    timeout: 600
+
+# Default evidence settings
+evidence:
+  encrypt: true
+  compress: true
+  retention_days: 90
+  
+  screenshots:
+    enabled: true
+    format: "png"
+    quality: 85
+  
+  har_capture:
+    enabled: true
+    include_bodies: true
+
+# Default reporting
+reporting:
+  formats:
+    - html
+    - json
+  
+  frameworks:
+    - mitre
+    - owasp_llm
+  
+  include_raw_findings: true
+  include_screenshots: true
+
+# Default safety controls
+safety:
+  stop_on_critical: false
+  max_findings: 1000
+  max_duration: 3600
+  confirm_destructive: true
+  dry_run: false
+
+# Default logging
+logging:
+  level: "INFO"
+  console: true
+  file: true
+  rotation:
+    enabled: true
+    max_bytes: 10485760
+    backup_count: 5
+
+# Default external tools
+external_tools:
+  nuclei:
+    enabled: true
+    concurrency: 10
+  
+  semgrep:
+    enabled: true
+    timeout: 300
+  
+  shannon:
+    enabled: false
+  
+  vulnhuntr:
+    enabled: false
+
+# Default proxy
+proxy:
+  backend: "none"
+  capture_traffic: false
+
+# Default notifications
+notifications:
+  webhook_url: null
+  email:
+    enabled: false
+  slack:
+    enabled: false
+
+# Default advanced settings
+advanced:
+  user_agent: "llmrt/1.0.0"
+  
+  timeouts:
+    connect: 10
+    read: 30
+    total: 60
+  
+  retries:
+    max_attempts: 3
+    backoff_factor: 2
+  
+  thread_pool_size: 10
+  memory_limit_mb: 2048
+  
+  # Browser automation
+  browser:
+    headless: true
+    type: "chromium"
+    stealth: true
+  
+  # OOB detection
+  oob:
+    enabled: true
+    server: "oast.pro"
+    poll_interval: 5

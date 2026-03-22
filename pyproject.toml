@@ -1,0 +1,56 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "llmrt"
+version = "1.0.0"
+description = "AI App + MCP Security Assessment Platform"
+requires-python = ">=3.11"
+dependencies = [
+    "grpcio==1.64.0",
+    "grpcio-tools==1.64.0",
+    "anthropic>=0.28.0",
+    "garak>=0.9.0",
+    "deepteam>=0.1.0",
+    "pyrit>=0.3.0",
+    "artkit>=0.1.0",
+    "rigging>=1.0.0",
+    "llamator>=0.1.0",
+    "nvdlib>=0.7.0",
+    "mcp-nvd>=0.1.0",
+    "sentence-transformers>=3.0.0",
+    "torch>=2.0.0",
+    "playwright>=1.44.0",
+    "semgrep>=1.70.0",
+    "shodan>=1.31.0",
+    "mitmproxy>=10.3.0",
+    "python-owasp-zap-v2.4>=0.0.21",
+    "pysqlcipher3>=1.2.0",
+    "ssdeep>=3.4",
+    "weasyprint>=62.0",
+    "jinja2>=3.1.0",
+    "fastapi>=0.111.0",
+    "uvicorn[standard]>=0.30.0",
+    "websockets>=12.0",
+    "typer[all]>=0.12.0",
+    "rich>=13.7.0",
+    "httpx[http2]>=0.27.0",
+    "pydantic[email]>=2.7.0",
+    "sqlalchemy>=2.0.0",
+    "schemathesis>=3.27.0",
+    "arjun>=2.2.0",
+    "selenium>=4.21.0",
+    "selenium-wire>=5.1.0",
+    "pyyaml>=6.0.1",
+    "cryptography>=42.0.0",
+    "python-dotenv>=1.0.0",
+    "aiofiles>=23.2.0",
+    "tenacity>=8.3.0",
+]
+
+[project.scripts]
+llmrt = "python.cli.main:app"
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "pytest-asyncio>=0.23", "black", "ruff", "mypy"]

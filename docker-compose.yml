@@ -1,0 +1,222 @@
+version: '3.8'
+
+services:
+  # Go Speed Layer - Probe Server
+  probe-server:
+    build:
+      context: .
+      dockerfile: Dockerfile.go
+    container_name: llmrt-probe-server
+    command: probe_server
+    ports:
+      - "50051:50051"
+    environment:
+      - INTERACTSH_SERVER=${INTERACTSH_SERVER:-oast.pro}
+      - INTERACTSH_TOKEN=${INTERACTSH_TOKEN}
+      - PROXY_BACKEND=${PROXY_BACKEND:-}
+      - DEFAULT_RATE_LIMIT_MS=${DEFAULT_RATE_LIMIT_MS:-200}
+    networks:
+      - llmrt-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "50051"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+
+  # Go Speed Layer - Recon Server
+  recon-server:
+    build:
+      context: .
+      dockerfile: Dockerfile.go
+    container_name: llmrt-recon-server
+    command: recon_server
+    ports:
+      - "50052:50052"
+    environment:
+      - DEFAULT_RATE_LIMIT_MS=${DEFAULT_RATE_LIMIT_MS:-200}
+    networks:
+      - llmrt-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "50052"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+
+  # Go Speed Layer - MCP Server
+  mcp-server:
+    build:
+      context: .
+      dockerfile: Dockerfile.go
+    container_name: llmrt-mcp-server
+    command: mcp_server
+    ports:
+      - "50053:50053"
+    environment:
+      - INTERACTSH_SERVER=${INTERACTSH_SERVER:-oast.pro}
+      - INTERACTSH_TOKEN=${INTERACTSH_TOKEN}
+      - DEFAULT_RATE_LIMIT_MS=${DEFAULT_RATE_LIMIT_MS:-200}
+    networks:
+      - llmrt-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "50053"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+
+  # Python Intelligence Layer - Orchestrator & API
+  orchestrator:
+    build:
+      context: .
+      dockerfile: Dockerfile.python
+    container_name: llmrt-orchestrator
+    ports:
+      - "8000:8000"
+    environment:
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - VULNHUNTR_MODEL=${VULNHUNTR_MODEL:-claude-sonnet-4}
+      - NVD_API_KEY=${NVD_API_KEY}
+      - SHODAN_API_KEY=${SHODAN_API_KEY}
+      - PROBE_GRPC=probe-server:50051
+      - RECON_GRPC=recon-server:50052
+      - MCP_GRPC=mcp-server:50053
+      - CAMPAIGN_ENCRYPT_KEY=${CAMPAIGN_ENCRYPT_KEY}
+      - DEFAULT_CONCURRENCY=${DEFAULT_CONCURRENCY:-5}
+      - MAX_TURNS=${MAX_TURNS:-10}
+    volumes:
+      - ./output:/app/output
+      - ./config:/app/config:ro
+      - ./data:/app/data:ro
+    depends_on:
+      - probe-server
+      - recon-server
+      - mcp-server
+    networks:
+      - llmrt-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+
+  # Shannon White-Box Analysis
+  shannon:
+    build:
+      context: .
+      dockerfile: Dockerfile.shannon
+    container_name: llmrt-shannon
+    environment:
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - VULNHUNTR_MODEL=${VULNHUNTR_MODEL:-claude-sonnet-4}
+      - SHANNON_WORKSPACE_DIR=/shannon/workspace
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+    volumes:
+      - ./output/shannon:/shannon/workspace
+    networks:
+      - llmrt-network
+    restart: "no"
+    profiles:
+      - whitebox
+
+  # mitmproxy for traffic interception
+  mitmproxy:
+    image: mitmproxy/mitmproxy:latest
+    container_name: llmrt-mitmproxy
+    command: mitmweb --web-host 0.0.0.0 --web-port 8081 --listen-port 8080
+    ports:
+      - "8080:8080"  # Proxy port
+      - "8081:8081"  # Web interface
+    volumes:
+      - ./python/proxy/mitmproxy_addon.py:/home/mitmproxy/addons/llmrt_addon.py:ro
+    networks:
+      - llmrt-network
+    restart: unless-stopped
+    profiles:
+      - proxy
+
+  # OWASP ZAP for active scanning
+  zap:
+    image: owasp/zap2docker-stable:latest
+    container_name: llmrt-zap
+    command: zap.sh -daemon -host 0.0.0.0 -port 8090 -config api.addrs.addr.name=.* -config api.addrs.addr.regex=true -config api.key=${ZAP_API_KEY:-llmrt-zap-key}
+    ports:
+      - "8090:8090"
+    networks:
+      - llmrt-network
+    restart: unless-stopped
+    profiles:
+      - proxy
+
+  # Mock Vulnerable LLM Application (for testing)
+  mock-llm-app:
+    build:
+      context: .
+      dockerfile: Dockerfile.python
+    container_name: llmrt-mock-llm-app
+    command: python tests/mock_server/app.py
+    ports:
+      - "9999:9999"
+    networks:
+      - llmrt-network
+    restart: unless-stopped
+    profiles:
+      - testing
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9999/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+
+  # Mock Vulnerable MCP Server (for testing)
+  mock-mcp-server:
+    build:
+      context: .
+      dockerfile: Dockerfile.python
+    container_name: llmrt-mock-mcp-server
+    command: python tests/mock_server/mcp_server.py
+    ports:
+      - "9998:9998"
+    networks:
+      - llmrt-network
+    restart: unless-stopped
+    profiles:
+      - testing
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9998/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+
+  # NVD CVE MCP Server (optional external service)
+  mcp-nvd:
+    image: ghcr.io/dreadnode/mcp-nvd:latest
+    container_name: llmrt-mcp-nvd
+    ports:
+      - "9090:9090"
+    environment:
+      - NVD_API_KEY=${NVD_API_KEY}
+    networks:
+      - llmrt-network
+    restart: unless-stopped
+    profiles:
+      - intelligence
+
+networks:
+  llmrt-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16
+
+volumes:
+  output:
+    driver: local

@@ -1,0 +1,46 @@
+syntax = "proto3";
+package llmrt;
+option go_package = "github.com/llmrt/llm-redteam/go/internal/proto";
+
+import "common.proto";
+
+service ReconService {
+  rpc ScanPorts      (PortScanRequest)  returns (PortScanResult);
+  rpc FuzzEndpoints  (FuzzRequest)      returns (FuzzResult);
+  rpc CheckBinding   (BindingRequest)   returns (BindingResult);
+  rpc ParseHAR       (HARRequest)       returns (EndpointMap);
+  rpc HealthCheck    (HealthRequest)    returns (HealthResponse);
+}
+
+message PortScanRequest  { string host = 1; repeated int32 ports = 2; }
+message PortScanResult   {
+  repeated PortEntry ports = 1;
+  message PortEntry {
+    int32  port    = 1;
+    string service = 2;
+    string banner  = 3;
+    bool   ai_service = 4;
+  }
+}
+
+message FuzzRequest  {
+  string base_url     = 1;
+  string wordlist     = 2;
+  int32  concurrency  = 3;
+  int32  delay_ms     = 4;
+}
+message FuzzResult   { repeated EndpointEntry endpoints = 1; }
+message EndpointEntry {
+  string url    = 1;
+  int32  status = 2;
+  int64  size   = 3;
+}
+
+message BindingRequest  { string host = 1; int32 port = 2; }
+message BindingResult   { bool exposed = 1; string bound_address = 2; }
+
+message HARRequest  { bytes har_data = 1; }
+message EndpointMap {
+  repeated EndpointEntry endpoints = 1;
+  string auth_type = 2;
+}

@@ -1,0 +1,75 @@
+id: mcp-rug-pull
+
+info:
+  name: MCP Rug Pull Detection
+  author: llmrt
+  severity: critical
+  description: Detects rug pull attacks where MCP tool descriptions change maliciously after enumeration
+  reference:
+    - https://adversa.ai/mcp-top-25
+  classification:
+    cvss-metrics: CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H
+    cvss-score: 10.0
+    cwe-id: CWE-494
+  tags: mcp,rug-pull,adversa-mcp-14,supply-chain
+
+http:
+  - method: POST
+    path:
+      - "{{BaseURL}}/mcp"
+      - "{{BaseURL}}/api/mcp"
+      - "{{BaseURL}}/rpc"
+    
+    headers:
+      Content-Type: application/json
+    
+    body: |
+      {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "tools/list",
+        "params": {}
+      }
+    
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "tools"
+          - "description"
+        condition: and
+      
+      - type: status
+        status:
+          - 200
+      
+      - type: word
+        part: body
+        words:
+          - "exfil"
+          - "exfiltrate"
+          - "send_to"
+          - "webhook"
+          - "post_data"
+          - "upload_to"
+          - "email_to"
+          - "http://"
+          - "https://"
+        condition: or
+    
+    extractors:
+      - type: json
+        part: body
+        json:
+          - '.result.tools[].name'
+          - '.result.tools[].description'
+      
+      - type: regex
+        part: body
+        regex:
+          - '(?i)(exfil.*?)'
+          - '(?i)(send.*?to.*?)'
+          - '(?i)(webhook.*?)'
+          - '(https?://[^\s"]+)'
+

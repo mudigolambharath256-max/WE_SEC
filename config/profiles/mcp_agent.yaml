@@ -1,0 +1,229 @@
+# llmrt Profile: MCP Agent
+# Optimized for testing Model Context Protocol agents and servers
+
+profile:
+  name: "mcp_agent"
+  description: "Security assessment profile for MCP agents"
+  target_type: "mcp_agent"
+
+# MCP-specific settings
+settings:
+  max_tool_calls: 50
+  max_tool_chain_depth: 10
+  sampling_enabled: true
+
+# Enabled attack families
+attack_families:
+  # Lethal Trifecta (Adversa MCP Top 25 #1)
+  lethal_trifecta:
+    enabled: true
+    priority: "critical"
+    description: "Write access + Code execution + Network access"
+    detection:
+      - file_write_capability
+      - code_execution_capability
+      - network_access_capability
+  
+  # Tool injection
+  mcp_tool_injection:
+    enabled: true
+    priority: "critical"
+    techniques:
+      - parameter_injection
+      - sql_injection
+      - command_injection
+      - path_traversal
+    payloads:
+      - "'; DROP TABLE users--"
+      - "../../../etc/passwd"
+      - "$(whoami)"
+  
+  # Rug pull attacks (Adversa MCP Top 25 #14)
+  mcp_rug_pull:
+    enabled: true
+    priority: "critical"
+    techniques:
+      - tool_description_change
+      - behavior_modification
+      - malicious_update
+    monitoring:
+      check_interval: 5
+      diff_threshold: 0.5
+  
+  # Privilege escalation
+  mcp_privilege_escalation:
+    enabled: true
+    priority: "critical"
+    techniques:
+      - tool_chain_escalation
+      - permission_inheritance
+      - capability_expansion
+  
+  # OAuth vulnerabilities
+  oauth_vulnerabilities:
+    enabled: true
+    priority: "high"
+    techniques:
+      - confused_deputy
+      - token_leakage
+      - endpoint_xss
+      - session_hijacking
+    tests:
+      - oauth_confused_deputy
+      - token_passthrough
+      - session_id_harvest
+      - oauth_endpoint_xss
+  
+  # Cross-tool attacks
+  cross_tool_orchestration:
+    enabled: true
+    priority: "high"
+    techniques:
+      - multi_tool_chain
+      - tool_contamination
+      - data_flow_manipulation
+  
+  # Tool spoofing
+  tool_name_spoof:
+    enabled: true
+    priority: "medium"
+    techniques:
+      - name_similarity
+      - description_manipulation
+      - capability_misrepresentation
+  
+  # Context bleeding
+  context_bleeding:
+    enabled: true
+    priority: "high"
+    techniques:
+      - cross_session_leakage
+      - tool_context_pollution
+      - memory_contamination
+  
+  # Cross-tenant attacks
+  cross_tenant_leak:
+    enabled: true
+    priority: "critical"
+    techniques:
+      - tenant_isolation_bypass
+      - data_leakage
+      - resource_access
+  
+  # Sampling abuse
+  mcp_sampling_attack:
+    enabled: true
+    priority: "medium"
+    techniques:
+      - unauthorized_llm_access
+      - cost_escalation
+      - quota_exhaustion
+  
+  # Agent memory attacks
+  agent_memory_attack:
+    enabled: true
+    priority: "high"
+    techniques:
+      - memory_poisoning
+      - persistent_injection
+      - memory_extraction
+
+# Recon techniques
+recon:
+  mcp_server_discovery:
+    enabled: true
+    techniques:
+      - endpoint_enumeration
+      - transport_detection
+      - capability_discovery
+  
+  tool_enumeration:
+    enabled: true
+    extract:
+      - tool_names
+      - tool_descriptions
+      - input_schemas
+      - capabilities
+  
+  resource_enumeration:
+    enabled: true
+    extract:
+      - resource_uris
+      - resource_types
+      - access_patterns
+  
+  prompt_enumeration:
+    enabled: true
+    extract:
+      - prompt_templates
+      - prompt_arguments
+
+# MCP protocol testing
+protocol:
+  json_rpc_validation:
+    enabled: true
+    test_malformed: true
+    test_version_mismatch: true
+  
+  transport_testing:
+    enabled: true
+    transports:
+      - http
+      - sse
+      - websocket
+  
+  capability_testing:
+    enabled: true
+    test_sampling: true
+    test_roots: true
+    test_prompts: true
+
+# Tool testing
+tools:
+  parameter_fuzzing:
+    enabled: true
+    techniques:
+      - type_confusion
+      - boundary_testing
+      - injection_testing
+  
+  permission_testing:
+    enabled: true
+    test_unauthorized_access: true
+    test_privilege_escalation: true
+  
+  chain_testing:
+    enabled: true
+    max_chain_length: 10
+    test_circular_calls: true
+
+# Supply chain testing
+supply_chain:
+  package_auditing:
+    enabled: true
+    check_dependencies: true
+    check_vulnerabilities: true
+  
+  update_monitoring:
+    enabled: true
+    monitor_tool_changes: true
+    monitor_behavior_changes: true
+
+# Evidence collection
+evidence:
+  capture_tool_calls: true
+  capture_tool_responses: true
+  capture_json_rpc_traffic: true
+  capture_tool_schemas: true
+  
+  screenshots:
+    on_privilege_escalation: true
+    on_cross_tenant_leak: true
+
+# Reporting
+reporting:
+  include_tool_inventory: true
+  include_capability_matrix: true
+  include_attack_chains: true
+  include_adversa_mcp_mapping: true
+  include_owasp_mcp_mapping: true

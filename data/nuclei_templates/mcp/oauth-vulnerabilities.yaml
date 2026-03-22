@@ -1,0 +1,83 @@
+id: mcp-oauth-vulnerabilities
+
+info:
+  name: MCP OAuth Security Issues
+  author: llmrt
+  severity: high
+  description: Detects OAuth vulnerabilities in MCP servers including confused deputy, token leakage, and endpoint XSS
+  reference:
+    - https://adversa.ai/mcp-top-25
+    - https://cwe.mitre.org/data/definitions/601.html
+  classification:
+    cvss-metrics: CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:C/C:H/I:H/A:N
+    cvss-score: 9.3
+    cwe-id: CWE-601
+  tags: mcp,oauth,confused-deputy,xss,adversa-mcp-08,adversa-mcp-09
+
+http:
+  - method: GET
+    path:
+      - "{{BaseURL}}/oauth/authorize?client_id=test&redirect_uri={{redirect_uri}}&state={{state}}"
+      - "{{BaseURL}}/auth/oauth?client_id=test&redirect_uri={{redirect_uri}}"
+      - "{{BaseURL}}/mcp/oauth/callback?code={{code}}&state={{state}}"
+    
+    payloads:
+      redirect_uri:
+        - "https://evil.com/callback"
+        - "http://localhost:8080@evil.com"
+        - "https://evil.com%2F@legitimate.com"
+        - "javascript:alert(document.domain)"
+        - "data:text/html,<script>alert(1)</script>"
+      
+      state:
+        - "<script>alert('XSS')</script>"
+        - "'\"><script>alert(document.domain)</script>"
+        - "javascript:alert(1)"
+      
+      code:
+        - "test_code"
+        - "../../../etc/passwd"
+        - "'; DROP TABLE oauth_tokens--"
+    
+    matchers-condition: or
+    matchers:
+      - type: word
+        part: header
+        words:
+          - "Location: https://evil.com"
+          - "Location: http://localhost:8080@evil.com"
+          - "Location: javascript:"
+        condition: or
+      
+      - type: word
+        part: body
+        words:
+          - "<script>alert"
+          - "javascript:alert"
+          - "onerror="
+        condition: or
+      
+      - type: regex
+        part: body
+        regex:
+          - '(?i)(access_token|bearer|oauth_token)[\s:=]+([a-zA-Z0-9_\-\.]+)'
+      
+      - type: word
+        part: body
+        words:
+          - "SQL syntax"
+          - "root:"
+        condition: or
+    
+    extractors:
+      - type: regex
+        part: header
+        regex:
+          - 'Location:\s*(.*?)(?:\r\n|$)'
+      
+      - type: regex
+        part: body
+        regex:
+          - '(?i)(access_token|bearer|oauth_token)[\s:=]+([a-zA-Z0-9_\-\.]+)'
+          - '(<script.*?>.*?</script>)'
+

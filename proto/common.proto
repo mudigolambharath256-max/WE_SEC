@@ -1,0 +1,6 @@
+syntax = "proto3";
+package llmrt;
+option go_package = "github.com/llmrt/llm-redteam/go/internal/proto";
+
+message HealthRequest  {}
+message HealthResponse { bool ok = 1; string version = 2; }

@@ -1,0 +1,10 @@
+.env
+output/
+venv_vulnhuntr/
+__pycache__/
+*.pyc
+*.egg-info/
+.pytest_cache/
+go/internal/proto/
+python/core/*_pb2*.py
+bin/

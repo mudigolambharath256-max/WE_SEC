@@ -1,0 +1,262 @@
+# llmrt Scope Configuration
+# Defines authorized testing boundaries for security assessment campaigns
+
+# Campaign metadata
+campaign:
+  name: "Example Security Assessment"
+  operator: "Security Team"
+  authorization: "Written authorization required - reference authorization document"
+  start_date: "2024-01-01"
+  end_date: "2024-12-31"
+
+# Scope boundaries - CRITICAL: Only test within these boundaries
+scope_boundaries:
+  # Allowed domains for testing
+  allowed_domains:
+    - "example.com"
+    - "api.example.com"
+    - "chat.example.com"
+    - "*.staging.example.com"  # Wildcard support
+  
+  # Excluded paths (even within allowed domains)
+  excluded_paths:
+    - "/admin"
+    - "/internal"
+    - "/payment"
+    - "/checkout"
+  
+  # Excluded file extensions
+  excluded_extensions:
+    - ".pdf"
+    - ".zip"
+    - ".exe"
+  
+  # IP ranges (optional)
+  allowed_ip_ranges:
+    - "10.0.0.0/8"
+    - "192.168.1.0/24"
+  
+  # Port restrictions
+  allowed_ports:
+    - 80
+    - 443
+    - 8080
+    - 8443
+
+# Target configuration
+target:
+  # Primary target URL
+  url: "https://chat.example.com"
+  
+  # Target type
+  type: "chatbot"  # chatbot, rag_app, mcp_agent, ide_assistant, api
+  
+  # Authentication
+  auth:
+    type: "api_key"  # api_key, session_cookie, jwt, oauth_bearer, none
+    header_name: "Authorization"
+    token: "${API_KEY}"  # Use environment variable
+    # For JWT:
+    # jwt_exp: 3600
+    # For OAuth:
+    # oauth_client_id: "${OAUTH_CLIENT_ID}"
+    # oauth_client_secret: "${OAUTH_CLIENT_SECRET}"
+  
+  # Rate limiting
+  rate_limit:
+    requests_per_second: 5
+    burst: 10
+    delay_ms: 200
+
+# Attack profile
+profile:
+  name: "chatbot"  # References config/profiles/chatbot.yaml
+  
+  # Override specific settings
+  overrides:
+    max_turns: 10
+    concurrency: 5
+    timeout_seconds: 30
+
+# Phases to execute
+phases:
+  recon:
+    enabled: true
+    techniques:
+      - port_scan
+      - endpoint_discovery
+      - technology_fingerprinting
+      - mcp_detection
+  
+  prompt_attacks:
+    enabled: true
+    techniques:
+      - prompt_injection
+      - jailbreak
+      - system_prompt_leak
+      - rce_probe
+      - unicode_injection
+      - flipattack
+  
+  rag_attacks:
+    enabled: true
+    techniques:
+      - rag_poisoning
+      - context_manipulation
+      - memory_poisoning
+  
+  mcp_attacks:
+    enabled: true
+    techniques:
+      - lethal_trifecta
+      - tool_injection
+      - rug_pull
+      - privilege_escalation
+      - oauth_vulnerabilities
+
+# Evidence collection
+evidence:
+  # Encryption key for findings database
+  encrypt_key: "${CAMPAIGN_ENCRYPT_KEY}"
+  
+  # Storage location
+  database_path: "./output/findings.db"
+  
+  # Screenshot capture
+  screenshots:
+    enabled: true
+    on_finding: true
+    output_dir: "./output/screenshots"
+  
+  # HAR file capture
+  har_capture:
+    enabled: true
+    output_dir: "./output/har"
+
+# Reporting
+reporting:
+  # Report formats to generate
+  formats:
+    - html
+    - pdf
+    - json
+  
+  # Framework mappings to include
+  frameworks:
+    - mitre
+    - owasp_llm
+    - agentic_owasp
+    - owasp_mcp
+    - adversa_mcp
+  
+  # Output directory
+  output_dir: "./output/reports"
+
+# Safety controls
+safety:
+  # Stop on critical finding
+  stop_on_critical: false
+  
+  # Maximum findings before stopping
+  max_findings: 1000
+  
+  # Maximum campaign duration (seconds)
+  max_duration: 3600
+  
+  # Require confirmation for destructive tests
+  confirm_destructive: true
+  
+  # Dry run mode (no actual probes fired)
+  dry_run: false
+
+# Notifications
+notifications:
+  # Webhook for real-time alerts
+  webhook_url: "${WEBHOOK_URL}"
+  
+  # Email notifications
+  email:
+    enabled: false
+    smtp_server: "smtp.example.com"
+    smtp_port: 587
+    from: "llmrt@example.com"
+    to:
+      - "security-team@example.com"
+  
+  # Slack notifications
+  slack:
+    enabled: false
+    webhook_url: "${SLACK_WEBHOOK_URL}"
+
+# External tools
+external_tools:
+  # Nuclei
+  nuclei:
+    enabled: true
+    templates_dir: "./data/nuclei_templates"
+  
+  # Semgrep
+  semgrep:
+    enabled: true
+    rules_dir: "./data/semgrep_rules"
+  
+  # Shannon (white-box)
+  shannon:
+    enabled: false
+    workspace_dir: "./output/shannon"
+  
+  # Vulnhuntr
+  vulnhuntr:
+    enabled: false
+    model: "claude-sonnet-4"
+
+# Proxy configuration
+proxy:
+  # Proxy backend
+  backend: "mitmproxy"  # mitmproxy, zap, burp, none
+  
+  # Proxy settings
+  mitmproxy:
+    port: 8080
+    mode: "regular"  # regular, transparent, socks5
+  
+  zap:
+    url: "http://localhost:8090"
+    api_key: "${ZAP_API_KEY}"
+  
+  burp:
+    url: "http://localhost:1337"
+    api_key: "${BURP_API_KEY}"
+
+# Logging
+logging:
+  level: "INFO"  # DEBUG, INFO, WARNING, ERROR
+  file: "./output/llmrt.log"
+  console: true
+  
+  # Log rotation
+  rotation:
+    max_bytes: 10485760  # 10MB
+    backup_count: 5
+
+# Advanced settings
+advanced:
+  # User agent
+  user_agent: "llmrt/1.0.0 (Security Assessment)"
+  
+  # Timeout settings
+  timeouts:
+    connect: 10
+    read: 30
+    total: 60
+  
+  # Retry settings
+  retries:
+    max_attempts: 3
+    backoff_factor: 2
+  
+  # Thread pool size
+  thread_pool_size: 10
+  
+  # Memory limits
+  memory_limit_mb: 2048

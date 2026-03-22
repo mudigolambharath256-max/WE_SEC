@@ -1,0 +1,48 @@
+# Dockerfile for Shannon White-Box Analysis
+# Separate container for Shannon due to heavy dependencies
+
+FROM python:3.11-slim
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    git \
+    curl \
+    wget \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /shannon
+
+# Clone Shannon repository
+RUN git clone https://github.com/dreadnode/shannon.git . && \
+    pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
+
+# Install additional dependencies for llmrt integration
+RUN pip install --no-cache-dir \
+    anthropic>=0.28.0 \
+    pyyaml>=6.0.1 \
+    python-dotenv>=1.0.0
+
+# Create workspace directory
+RUN mkdir -p /shannon/workspace && chmod 777 /shannon/workspace
+
+# Create non-root user
+RUN useradd -m -u 1000 shannon && \
+    chown -R shannon:shannon /shannon
+
+USER shannon
+
+# Set environment variables
+ENV SHANNON_WORKSPACE_DIR=/shannon/workspace
+ENV PYTHONPATH=/shannon
+
+# Expose port for potential API
+EXPOSE 8001
+
+# Health check
+HEALTHCHECK --interval=60s --timeout=5s --start-period=30s --retries=3 \
+  CMD python -c "import shannon; print('OK')" || exit 1
+
+# Default command
+CMD ["python", "-m", "shannon.cli", "--help"]

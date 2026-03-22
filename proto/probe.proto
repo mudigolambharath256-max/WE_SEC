@@ -1,0 +1,50 @@
+syntax = "proto3";
+package llmrt;
+option go_package = "github.com/llmrt/llm-redteam/go/internal/proto";
+
+import "common.proto";
+
+service ProbeService {
+  rpc FireBatch  (ProbeBatchRequest) returns (stream ProbeResult);
+  rpc FireSingle (ProbeRequest)      returns (ProbeResult);
+  rpc Cancel     (CancelRequest)     returns (CancelResponse);
+  rpc HealthCheck (HealthRequest)    returns (HealthResponse);
+}
+
+message ProbeBatchRequest {
+  repeated string      payloads       = 1;
+  string               endpoint_url   = 2;
+  string               method         = 3;
+  map<string, string>  headers        = 4;
+  string               body_schema    = 5;
+  string               template_id    = 6;
+  int32                concurrency    = 7;
+  int32                delay_ms       = 8;
+  string               campaign_id    = 9;
+  bool                 apply_chatinject = 10;
+  bool                 apply_flipattack = 11;
+  string               oob_server     = 12;
+}
+
+message ProbeRequest {
+  string               payload        = 1;
+  string               endpoint_url   = 2;
+  string               method         = 3;
+  map<string, string>  headers        = 4;
+  string               body_schema    = 5;
+  string               campaign_id    = 6;
+}
+
+message ProbeResult {
+  string  payload        = 1;
+  string  response_body  = 2;
+  int32   status_code    = 3;
+  int64   latency_ms     = 4;
+  string  probe_family   = 5;
+  bool    oob_callback   = 6;
+  string  oob_payload    = 7;
+  string  error_message  = 8;
+}
+
+message CancelRequest  { string campaign_id = 1; }
+message CancelResponse { bool cancelled     = 1; }
